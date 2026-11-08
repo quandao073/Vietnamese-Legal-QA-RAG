@@ -1,0 +1,25 @@
+# GPU override: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+# Requires NVIDIA Container Toolkit.
+x-gpu: &gpu
+  build:
+    context: ./backend
+    args:
+      BASE_IMAGE: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+      TORCH_INDEX: ""
+  environment:
+    DEVICE: cuda
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+
+services:
+  api:
+    <<: *gpu
+  ingest:
+    <<: *gpu
+  eval:
+    <<: *gpu
