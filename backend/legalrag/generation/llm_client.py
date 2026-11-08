@@ -34,12 +34,19 @@ ErrorCode = Literal[
 ]
 
 _MESSAGES_VI: dict[str, str] = {
-    "auth": "Không thể xác thực với dịch vụ Anthropic API. Vui lòng kiểm tra khóa API (ANTHROPIC_API_KEY).",
-    "rate_limit": "Dịch vụ ngôn ngữ đang quá tải hoặc đã đạt giới hạn truy cập. Vui lòng thử lại sau ít phút.",
+    "auth": (
+        "Không thể xác thực với dịch vụ Anthropic API. "
+        "Vui lòng kiểm tra khóa API (ANTHROPIC_API_KEY)."
+    ),
+    "rate_limit": (
+        "Dịch vụ ngôn ngữ đang quá tải hoặc đã đạt giới hạn truy cập. Vui lòng thử lại sau ít phút."
+    ),
     "overloaded": "Dịch vụ ngôn ngữ đang quá tải. Vui lòng thử lại sau ít phút.",
     "timeout": "Dịch vụ ngôn ngữ phản hồi quá lâu. Vui lòng thử lại.",
     "connection": "Không kết nối được tới dịch vụ ngôn ngữ. Vui lòng kiểm tra mạng và thử lại.",
-    "bad_request": "Yêu cầu gửi tới dịch vụ ngôn ngữ không hợp lệ. Vui lòng thử lại với câu hỏi khác.",
+    "bad_request": (
+        "Yêu cầu gửi tới dịch vụ ngôn ngữ không hợp lệ. Vui lòng thử lại với câu hỏi khác."
+    ),
     "unknown": "Đã xảy ra lỗi khi sinh câu trả lời. Vui lòng thử lại sau.",
 }
 
