@@ -2,7 +2,7 @@
 
 Revision ID: 0001
 Revises:
-Create Date: 2026-11-08 10:32:32.623772
+Create Date: 2026-11-08 10:37:31.464787
 """
 
 from __future__ import annotations
@@ -109,6 +109,7 @@ def upgrade() -> None:
         sa.Column("chunk_id", sa.String(length=160), nullable=False),
         sa.Column("doc_id", sa.String(length=128), nullable=False),
         sa.Column("seq", sa.Integer(), nullable=False),
+        sa.Column("title", sa.Text(), nullable=False),
         sa.Column("text", sa.Text(), nullable=False),
         sa.Column("chapter", sa.String(length=64), nullable=True),
         sa.Column("chapter_title", sa.Text(), nullable=True),

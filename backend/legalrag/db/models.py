@@ -61,6 +61,7 @@ class Chunk(Base):
         String(128), ForeignKey("documents.doc_id", ondelete="CASCADE"), nullable=False
     )
     seq: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False, default="")
     text: Mapped[str] = mapped_column(Text, nullable=False)
     chapter: Mapped[str | None] = mapped_column(String(64))
     chapter_title: Mapped[str | None] = mapped_column(Text)

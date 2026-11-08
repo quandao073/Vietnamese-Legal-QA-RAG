@@ -64,6 +64,7 @@ class _Ctx:
             chunk_id=make_chunk_id(self.doc.doc_id, self.seq),
             doc_id=self.doc.doc_id,
             seq=self.seq,
+            title=self.doc.title,
             text=text,
             text_for_bm25=tokenize_for_bm25(text),
             chapter=chapter.label if chapter else None,

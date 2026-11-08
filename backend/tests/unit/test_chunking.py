@@ -69,6 +69,7 @@ def test_article_chunker_one_chunk_per_article(tamir_doc, counter):
         " › Điều 1. Phạm vi điều chỉnh\n"
     )
     assert first.chapter == "Chương I" and first.article_title == "Phạm vi điều chỉnh"
+    assert first.title == tamir_doc.title
     assert first.clause is None and first.source_ids == ["passage_000001"]
     assert first.chunk_id == "tamir:doc_000001#00000"
 

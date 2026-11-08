@@ -26,6 +26,7 @@ class LegalChunk(BaseModel):
     chunk_id: str
     doc_id: str
     seq: int
+    title: str = ""  # document title, denormalized for display/filters
     text: str
     text_for_bm25: str
     chapter: str | None = None
