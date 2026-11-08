@@ -152,12 +152,14 @@ def _classify_failure(
     gold = set(item.gold_chunk_ids)
     if item.category == "out_of_scope":
         return "ok" if intent != "legal_question" or not grounded else "missed_refusal"
-    if item.category in ("out_of_corpus", "tricky"):
+    if item.category == "out_of_corpus":
         if not grounded:
             return "ok"
-        if judge and judge.hallucinated_claims:
-            return "hallucination"
-        return "missed_refusal"
+        return "hallucination" if (judge and judge.hallucinated_claims) else "missed_refusal"
+    if item.category == "tricky":
+        # the topic exists in the corpus; the premise does not. Refusing is fine, and so is an
+        # answer that says the premise is unsupported — only invented claims count as failure.
+        return "hallucination" if (judge and judge.hallucinated_claims) else "ok"
     # legal question with gold
     if not grounded:
         return "false_refusal" if gold else "ok"
@@ -299,20 +301,27 @@ def _refusal_metrics(rows: list[dict[str, Any]]) -> dict[str, float]:
     def rate(pred: Any, pool: list[dict[str, Any]]) -> float:
         return round(sum(1 for r in pool if pred(r)) / len(pool), 4) if pool else 0.0
 
-    ooc = [
+    refusal_pool = [
         r
         for r in rows
-        if r.get("category") in ("out_of_corpus", "tricky", "out_of_scope") and "grounded" in r
+        if r.get("category") in ("out_of_corpus", "out_of_scope") and "grounded" in r
     ]
+    tricky = [r for r in rows if r.get("category") == "tricky" and "grounded" in r]
+    all_refusal_set = refusal_pool + tricky
     legal = [
         r
         for r in rows
         if r.get("category") == "legal" and r.get("gold_chunk_ids") and "grounded" in r
     ]
     out: dict[str, float] = {}
-    if ooc:
-        out["correct_refusal_rate"] = rate(lambda r: not r["grounded"], ooc)
-        out["hallucination_rate"] = rate(lambda r: r.get("failure") == "hallucination", ooc)
+    if refusal_pool:
+        out["correct_refusal_rate"] = rate(lambda r: not r["grounded"], refusal_pool)
+    if tricky:
+        out["tricky_safe_rate"] = rate(lambda r: r.get("failure") != "hallucination", tricky)
+    if all_refusal_set:
+        out["hallucination_rate"] = rate(
+            lambda r: r.get("failure") == "hallucination", all_refusal_set
+        )
     if legal:
         out["false_refusal_rate"] = rate(lambda r: not r["grounded"], legal)
     return out
