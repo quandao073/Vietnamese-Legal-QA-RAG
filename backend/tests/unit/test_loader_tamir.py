@@ -108,3 +108,8 @@ def test_tamir_eval_pairs(loader):
     assert train[0].gold_source_ids == ["passage_000001"]
     assert train[0].gold_answer and train[0].id.startswith("tamir_train:")
     assert {p.split for p in pairs} == {"train", "test"}
+
+
+def test_tamir_raw_text_is_already_normalized(loader):
+    for d in loader.iter_documents():
+        assert normalize_text(d.raw_text) == d.raw_text

@@ -9,6 +9,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from legalrag.ingest.loaders.base import BaseLoader, hf_download
+from legalrag.ingest.normalize import normalize_text
 from legalrag.schemas.document import LegalDocument
 from legalrag.schemas.eval import EvalPair
 
@@ -35,9 +36,11 @@ class TamirLoader(BaseLoader):
         hf_download(REPO, "qa/train_qa.jsonl", self.raw_dir / "qa" / "train_qa.jsonl")
         hf_download(REPO, "qa/test_qa.jsonl", self.raw_dir / "qa" / "test_qa.jsonl")
 
+    kb_path_override: Path | None = None
+
     @property
     def kb_path(self) -> Path:
-        return self.raw_dir / "knowledge_base" / "knowledge_base.csv"
+        return self.kb_path_override or self.raw_dir / "knowledge_base" / "knowledge_base.csv"
 
     # ---- parsing -------------------------------------------------------------------------
     @staticmethod
@@ -83,7 +86,10 @@ class TamirLoader(BaseLoader):
             return start
 
         for r in rows:
-            p = TamirLoader.parse_passage(r["passage_text"])
+            p = {
+                k: (normalize_text(v) if v else v)
+                for k, v in TamirLoader.parse_passage(r["passage_text"]).items()
+            }
             if p["chapter"] and p["chapter"] != cur_chapter:
                 emit(
                     f"{p['chapter']}. {p['chapter_title']}"

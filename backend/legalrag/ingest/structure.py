@@ -9,7 +9,7 @@ from typing import Literal
 
 CHAPTER_RE = re.compile(r"^(Chương\s+[IVXLCDM]+)\s*[\.:]?\s*(.*)$")
 ARTICLE_RE = re.compile(r"^(Điều\s+\d+[a-z]?)\s*[\.:]?\s*(.*)$")
-CLAUSE_RE = re.compile(r"^(?:Khoản\s+)?(\d{1,3})\.\s+(.*)$")
+CLAUSE_RE = re.compile(r"^(?:Khoản\s+)?(\d{1,3})\.(?:\s+(.*))?$")
 POINT_RE = re.compile(r"^([a-zđ]{1,2})\)\s+(.*)$")
 
 Kind = Literal["document", "chapter", "article", "clause", "point"]
@@ -39,7 +39,7 @@ def _match(line: str) -> tuple[Kind, str, str] | None:
         return "article", m.group(1), m.group(2).strip()
     m = CLAUSE_RE.match(line)
     if m:
-        return "clause", f"Khoản {m.group(1)}", m.group(2).strip()
+        return "clause", f"Khoản {m.group(1)}", (m.group(2) or "").strip()
     m = POINT_RE.match(line)
     if m:
         return "point", f"Điểm {m.group(1)}", m.group(2).strip()

@@ -102,6 +102,15 @@ def test_preamble_text_before_first_marker_kept_on_document():
     assert [c.label for c in root.children if c.kind == "clause"] == ["Khoản 1", "Khoản 2"]
 
 
+def test_bare_clause_number_line_opens_a_clause():
+    # Tamir rebuild emits "26." alone when the clause only has points
+    text = "Điều 5. Đối tượng" + "\n" + "26." + "\n" + "a) Quà tặng" + "\n" + "b) Quà biếu"
+    root = parse_structure(text)
+    clause = root.children[0].children[0]
+    assert clause.kind == "clause" and clause.label == "Khoản 26" and clause.title is None
+    assert [p.label for p in clause.children] == ["Điểm a", "Điểm b"]
+
+
 def test_clause_with_explicit_khoan_prefix():
     # YuITC passages often start with "Khoản 1. ..." instead of "1. ..."
     text = "Khoản 1. Lao động giỏi là người đạt chuẩn." + "\n" + "Khoản 2. Chiến sĩ giỏi."
