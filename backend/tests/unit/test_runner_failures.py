@@ -47,7 +47,7 @@ def test_refusal_metrics_split_tricky_from_out_of_corpus():
         {"category": "legal", "grounded": True, "gold_chunk_ids": ["c"], "failure": "ok"},
     ]
     m = _refusal_metrics(rows)
-    assert m["correct_refusal_rate"] == 2 / 3  # out_of_corpus + out_of_scope only
+    assert m["correct_refusal_rate"] == round(2 / 3, 4)  # out_of_corpus + out_of_scope only
     assert m["tricky_safe_rate"] == 0.5
     assert m["hallucination_rate"] == 0.2  # over all 5 refusal-set rows
     assert m["false_refusal_rate"] == 0.5
