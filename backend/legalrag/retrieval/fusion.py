@@ -46,6 +46,10 @@ def title_boost(hits: list[Hit], law_names: list[str], threshold: int = 85) -> d
         if not title:
             continue
         for name in law_names:
+            # partial_ratio aligns the shorter string inside the longer one; a title much
+            # shorter than the law name ("Luật X") would match spuriously, so require length.
+            if len(title) < 0.8 * len(name):
+                continue
             if fuzz.partial_ratio(name.lower(), title) >= threshold:
                 out[h.chunk_id] = TITLE_BOOST
                 break

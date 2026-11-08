@@ -47,6 +47,8 @@ def test_title_boost_fuzzy_match():
     ]
     boosts = title_boost(hits, ["Luật Thuế thu nhập cá nhân"], threshold=85)
     assert boosts == {"x": 0.1}
+    # a short generic title must not match a long law name (partial_ratio pitfall)
+    assert title_boost([Hit("s", 1.0, {"title": "Luật X"})], ["Luật Thuế thu nhập cá nhân"]) == {}
     assert title_boost(hits, [], threshold=85) == {}
     assert (
         title_boost(hits, ["luật thuế tncn"], threshold=85) == {}

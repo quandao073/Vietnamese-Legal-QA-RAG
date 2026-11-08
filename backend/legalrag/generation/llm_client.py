@@ -152,7 +152,7 @@ class LLMClient:
     def _system_blocks(
         system: str | list[dict[str, Any]], cache_system: bool
     ) -> list[dict[str, Any]]:
-        blocks = (
+        blocks: list[dict[str, Any]] = (
             [{"type": "text", "text": system}]
             if isinstance(system, str)
             else [dict(b) for b in system]
