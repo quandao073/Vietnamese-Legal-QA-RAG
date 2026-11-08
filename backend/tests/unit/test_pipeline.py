@@ -174,3 +174,20 @@ async def test_top_k_override(top_k):
     r = make_retriever(dense, FakeBM25([]), _settings(rerank_enabled=False))
     res = await r.retrieve("q", qu=None, overrides=RetrievalOverrides(top_k=top_k))
     assert len(res.reranked) == top_k
+
+
+async def test_rerank_pool_size_is_configurable():
+    hits = [_hit(str(i), f"thuế {i}", article=f"Điều {i}") for i in range(40)]
+    dense = FakeDense({"q": hits})
+
+    class CountingReranker(FakeReranker):
+        seen: list[int] = []
+
+        def score(self, query, texts):
+            self.seen.append(len(texts))
+            return super().score(query, texts)
+
+    r = make_retriever(dense, FakeBM25([]), _settings(rerank_top_n=12, retrieval_top_n_dense=40))
+    r.reranker = CountingReranker()
+    await r.retrieve("thuế", qu=None)
+    assert CountingReranker.seen == [12]

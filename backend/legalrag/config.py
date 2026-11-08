@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     context_token_budget: int = 6000
     query_rewrite_enabled: bool = True
     min_rerank_score: float = 0.2
+    rerank_top_n: int = 30  # candidates passed to the cross-encoder (CPU cost ~0.7 s/pair)
     citation_llm_verify: bool = False
 
     # --- Ingest ---

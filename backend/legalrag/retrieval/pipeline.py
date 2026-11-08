@@ -16,7 +16,6 @@ from legalrag.retrieval.reranker import RerankerProtocol, rerank
 from legalrag.retrieval.types import Hit, RetrievalOverrides, RetrievalResult
 
 logger = logging.getLogger(__name__)
-RERANK_POOL = 30
 
 
 class _DenseLike(Protocol):
@@ -128,7 +127,7 @@ class Retriever:
         if use_rerank and candidates and self.reranker is not None:
             rerank_query = qu.standalone_question if qu else question
             reranked = await asyncio.to_thread(
-                rerank, rerank_query, candidates[:RERANK_POOL], self.reranker, top_k
+                rerank, rerank_query, candidates[: s.rerank_top_n], self.reranker, top_k
             )
         else:
             reranked = candidates[:top_k]
