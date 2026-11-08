@@ -33,7 +33,7 @@ class JsonFormatter(logging.Formatter):
 def setup_logging(level: str = "INFO") -> None:
     root = logging.getLogger()
     root.handlers.clear()
-    handler = logging.StreamHandler(sys.stdout)
+    handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(JsonFormatter())
     root.addHandler(handler)
     root.setLevel(level.upper())
