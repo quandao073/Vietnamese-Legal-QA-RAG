@@ -46,3 +46,18 @@ def test_per_query_and_aggregate():
     agg = aggregate(rows)
     assert agg["hit@1"] == 0.5 and agg["recall@5"] == 1.0 and agg["mrr@10"] == pytest.approx(0.625)
     assert agg["n"] == 2
+
+
+def test_group_level_metrics_treat_any_chunk_of_a_gold_passage_as_relevant():
+    # one gold passage split across two fixed windows (c1, c2); retrieving either should count fully
+    groups = [{"c1", "c2"}, {"c9"}]
+    assert recall_at_k(["c1", "x", "y"], groups, 3) == 0.5
+    assert recall_at_k(["c1", "c2", "y"], groups, 3) == 0.5  # same passage twice is still one hit
+    assert recall_at_k(["c2", "c9"], groups, 5) == 1.0
+    assert hit_at_k(["z", "c2"], groups, 2) == 1.0
+    assert mrr(["z", "c2"], groups) == 0.5
+    assert ndcg(["c1", "c2", "c9"], groups, k=10) == pytest.approx(
+        (1 + 1 / math.log2(4)) / (1 + 1 / math.log2(3))
+    )
+    m = per_query_metrics(["c1"], groups)
+    assert m["recall@1"] == 0.5 and m["hit@1"] == 1.0

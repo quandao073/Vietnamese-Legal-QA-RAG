@@ -24,6 +24,10 @@ class EvalItem(BaseModel):
     gold_answer: str | None = None
     category: str = "legal"
     gold_chunk_ids: list[str] = Field(default_factory=list)
+    gold_groups: list[list[str]] = Field(default_factory=list)  # one group per gold passage
+
+    def gold_sets(self) -> list[set[str]]:
+        return [set(g) for g in self.gold_groups if g]
 
 
 class _ChunkRepoLike(Protocol):
@@ -67,6 +71,8 @@ def resolve_gold_chunks(
     """A gold passage may map to several chunks (fixed windows); any of them counts as a hit."""
     out: list[EvalItem] = []
     for it in items:
-        ids = repo.by_source_ids(it.gold_source_ids, strategy) if it.gold_source_ids else []
-        out.append(it.model_copy(update={"gold_chunk_ids": sorted(set(ids))}))
+        groups = [sorted(set(repo.by_source_ids([sid], strategy))) for sid in it.gold_source_ids]
+        groups = [g for g in groups if g]
+        ids = sorted({c for g in groups for c in g})
+        out.append(it.model_copy(update={"gold_chunk_ids": ids, "gold_groups": groups}))
     return out

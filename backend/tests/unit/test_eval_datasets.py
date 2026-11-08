@@ -71,3 +71,11 @@ def test_resolve_gold_chunks_maps_sources_to_chunks():
     assert out[0].gold_chunk_ids == ["c1", "c2", "c3"]
     assert out[1].gold_chunk_ids == []
     assert set(DATASETS) == {"yuitc_test", "tamir_test", "tamir_train", "refusal_set"}
+
+
+def test_resolve_gold_chunks_keeps_per_passage_groups():
+    items = [EvalItem(id="a", question="q", gold_source_ids=["p1", "p2"])]
+    repo = FakeChunkRepo({"p1": ["c1", "c2"], "p2": ["c2", "c3"]})
+    (out,) = resolve_gold_chunks(items, repo, "article")
+    assert out.gold_groups == [["c1", "c2"], ["c2", "c3"]]
+    assert out.gold_sets() == [{"c1", "c2"}, {"c2", "c3"}]

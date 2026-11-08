@@ -8,32 +8,59 @@ from collections.abc import Iterable
 KS: tuple[int, ...] = (1, 3, 5, 10)
 
 
-def hit_at_k(ranked: list[str], gold: set[str], k: int) -> float:
-    return 1.0 if any(c in gold for c in ranked[:k]) else 0.0
+Gold = set[str] | list[set[str]]
 
 
-def recall_at_k(ranked: list[str], gold: set[str], k: int) -> float:
-    if not gold:
+def _groups(gold: Gold) -> list[set[str]]:
+    """Normalize gold to passage groups: a plain set means one group per chunk id."""
+    if isinstance(gold, set):
+        return [{c} for c in gold]
+    return [set(g) for g in gold if g]
+
+
+def _relevance(ranked: list[str], gold: Gold, k: int) -> list[int]:
+    """Binary relevance per rank: 1 the first time a chunk of a not-yet-seen gold group appears."""
+    groups = _groups(gold)
+    seen: set[int] = set()
+    rel: list[int] = []
+    for c in ranked[:k]:
+        hit = 0
+        for gi, g in enumerate(groups):
+            if c in g and gi not in seen:
+                seen.add(gi)
+                hit = 1
+        rel.append(hit)
+    return rel
+
+
+def hit_at_k(ranked: list[str], gold: Gold, k: int) -> float:
+    return 1.0 if any(_relevance(ranked, gold, k)) else 0.0
+
+
+def recall_at_k(ranked: list[str], gold: Gold, k: int) -> float:
+    groups = _groups(gold)
+    if not groups:
         return 0.0
-    return len(set(ranked[:k]) & gold) / len(gold)
+    return sum(_relevance(ranked, gold, k)) / len(groups)
 
 
-def mrr(ranked: list[str], gold: set[str], k: int = 10) -> float:
-    for i, c in enumerate(ranked[:k], start=1):
-        if c in gold:
+def mrr(ranked: list[str], gold: Gold, k: int = 10) -> float:
+    for i, r in enumerate(_relevance(ranked, gold, k), start=1):
+        if r:
             return 1.0 / i
     return 0.0
 
 
-def ndcg(ranked: list[str], gold: set[str], k: int = 10) -> float:
-    if not gold or not ranked:
+def ndcg(ranked: list[str], gold: Gold, k: int = 10) -> float:
+    groups = _groups(gold)
+    if not groups or not ranked:
         return 0.0
-    dcg = sum(1.0 / math.log2(i + 1) for i, c in enumerate(ranked[:k], start=1) if c in gold)
-    ideal = sum(1.0 / math.log2(i + 1) for i in range(1, min(len(gold), k) + 1))
+    dcg = sum(r / math.log2(i + 1) for i, r in enumerate(_relevance(ranked, gold, k), start=1))
+    ideal = sum(1.0 / math.log2(i + 1) for i in range(1, min(len(groups), k) + 1))
     return dcg / ideal if ideal else 0.0
 
 
-def per_query_metrics(ranked: list[str], gold: set[str]) -> dict[str, float]:
+def per_query_metrics(ranked: list[str], gold: Gold) -> dict[str, float]:
     out: dict[str, float] = {}
     for k in KS:
         out[f"hit@{k}"] = hit_at_k(ranked, gold, k)

@@ -93,11 +93,12 @@ async def run_retrieval(
             qu, u = await understand(it.question, history=None, llm=llm, settings=settings)
             usage = usage.add(u)
         res = await retriever.retrieve(it.question, qu=qu, overrides=cfg.overrides())
-        gold = set(it.gold_chunk_ids)
+        gold = it.gold_sets() or set(it.gold_chunk_ids)
         row: dict[str, Any] = {
             "id": it.id,
             "question": it.question,
-            "gold_chunk_ids": sorted(gold),
+            "gold_chunk_ids": it.gold_chunk_ids,
+            "gold_groups": it.gold_groups,
             "ranked": [h.chunk_id for h in res.reranked],
             "timings": res.timings,
             "stages": {},
