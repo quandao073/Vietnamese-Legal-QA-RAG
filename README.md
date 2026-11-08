@@ -106,7 +106,7 @@ Cấu trúc: `backend/legalrag/{ingest,retrieval,generation,api,eval}` (xem DESI
 |---|---|
 | `api` bị kill / OOM khi khởi động | Thiếu RAM cho bge-m3 + reranker. Tăng RAM Docker ≥ 8 GB, hoặc `RERANK_ENABLED=false`. |
 | `/health/ready` trả 503 lâu | Lần đầu nạp model 1-2 phút (CPU). Kiểm tra `make logs`; 503 kèm `qdrant:false` → `docker compose up -d qdrant`. |
-| Câu trả lời chậm (>30 s) trên CPU | Reranker cross-encoder tốn ~0,3-0,5 s/cặp. Giảm `RETRIEVAL_TOP_N_*`, tắt rerank trong “Cài đặt nâng cao”, hoặc dùng GPU (`docker-compose.gpu.yml`). |
+| Câu trả lời chậm (~25 s truy xuất) trên CPU | Reranker cross-encoder tốn ~0,75 s/cặp × 30 ứng viên (đo: p50 23,5 s). Đặt `RERANK_TOP_N=10` (~7 s), `RERANK_ENABLED=false` (~0,1 s, hybrid RRF), tắt rerank trong “Cài đặt nâng cao”, hoặc dùng GPU (`docker-compose.gpu.yml`, ~0,4 s). |
 | UI báo “Không thể xác thực với dịch vụ Anthropic API” | `ANTHROPIC_API_KEY` sai/hết hạn trong `.env`; sửa rồi `make up`. |
 | “Dịch vụ ngôn ngữ đang quá tải” | 429/529 từ Anthropic; hệ thống đã retry 5 lần, thử lại sau. |
 | Ingest YuITC quá chậm | CPU ~1,5 s/chunk. Giảm `CORPUS_MAX_DOCS` (vd 5000) hoặc dùng GPU. |
