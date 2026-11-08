@@ -57,6 +57,8 @@ def test_get_chunker_parses_fixed(counter):
     assert c.size == 256 and c.overlap == 32
     with pytest.raises(ValueError):
         get_chunker("unknown", counter=counter, max_tokens=700)
+    tagged = get_chunker("article__exp1", counter=counter, max_tokens=700)
+    assert isinstance(tagged, ArticleChunker) and tagged.strategy == "article__exp1"
 
 
 def test_article_chunker_one_chunk_per_article(tamir_doc, counter):

@@ -18,8 +18,10 @@ _QUERY_CACHE_TTL = 7 * 24 * 3600
 
 
 class EmbedderProtocol(Protocol):
-    dim: int
     model_name: str
+
+    @property
+    def dim(self) -> int: ...
 
     def encode_passages(self, texts: list[str], batch_size: int = 32) -> np.ndarray: ...
 

@@ -321,11 +321,13 @@ class ClauseChunker:
 
 
 class FixedChunker:
-    def __init__(self, *, size: int, overlap: int, counter: TokenCounter) -> None:
+    def __init__(
+        self, *, size: int, overlap: int, counter: TokenCounter, strategy: str | None = None
+    ) -> None:
         if overlap >= size:
             raise ValueError("overlap must be smaller than size")
         self.size, self.overlap, self.counter = size, overlap, counter
-        self.name = f"fixed_{size}_{overlap}"
+        self.name = strategy or f"fixed_{size}_{overlap}"
 
     def chunk(self, doc: LegalDocument, tree: Node, text: str) -> list[LegalChunk]:
         ctx = _Ctx(doc, text, self.counter, self.name)
@@ -351,8 +353,9 @@ class FixedChunker:
 class ParentChildChunker:
     name = "parent_child"
 
-    def __init__(self, *, counter: TokenCounter) -> None:
+    def __init__(self, *, counter: TokenCounter, strategy: str | None = None) -> None:
         self.counter = counter
+        self.name = strategy or "parent_child"
 
     def chunk(self, doc: LegalDocument, tree: Node, text: str) -> list[LegalChunk]:
         ctx = _Ctx(doc, text, self.counter, self.name)
@@ -374,13 +377,18 @@ class ParentChildChunker:
 
 
 def get_chunker(name: str, *, counter: TokenCounter, max_tokens: int) -> Chunker:
-    if name == "article":
-        return ArticleChunker(max_tokens=max_tokens, counter=counter)
-    if name == "clause":
-        return ClauseChunker(counter=counter)
-    if name == "parent_child":
-        return ParentChildChunker(counter=counter)
-    m = _FIXED_RE.match(name)
+    """Resolve a strategy label. A label may carry a tag after ``__`` (``article__v2``): the part
+    before the tag selects the algorithm, the full label is stored as ``chunk_strategy``."""
+    base = name.split("__", 1)[0]
+    if base == "article":
+        return ArticleChunker(max_tokens=max_tokens, counter=counter, strategy=name)
+    if base == "clause":
+        return ClauseChunker(counter=counter, strategy=name)
+    if base == "parent_child":
+        return ParentChildChunker(counter=counter, strategy=name)
+    m = _FIXED_RE.match(base)
     if m:
-        return FixedChunker(size=int(m.group(1)), overlap=int(m.group(2)), counter=counter)
+        return FixedChunker(
+            size=int(m.group(1)), overlap=int(m.group(2)), counter=counter, strategy=name
+        )
     raise ValueError(f"unknown chunk strategy: {name}")
