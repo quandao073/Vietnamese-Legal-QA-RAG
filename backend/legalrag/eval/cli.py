@@ -82,6 +82,7 @@ async def _answer(
     limit: int | None,
     yes: bool,
     faithfulness_sample: int = 0,
+    suffix_by_dataset: dict[str, str] | None = None,
 ) -> list[Any]:
     from legalrag.cache import get_cache
     from legalrag.eval.datasets import load_dataset
@@ -104,7 +105,12 @@ async def _answer(
     out = []
     for cfg in configs:
         for ds in datasets:
-            summary = await run_answer(cfg, ds, answerer=answerer, llm=llm, settings=s, limit=limit)
+            ds_cfg = cfg
+            if suffix_by_dataset and ds in suffix_by_dataset:
+                ds_cfg = cfg.model_copy(update={"strategy_suffix": suffix_by_dataset[ds]})
+            summary = await run_answer(
+                ds_cfg, ds, answerer=answerer, llm=llm, settings=s, limit=limit
+            )
             _print_summary(summary)
             out.append(summary)
         if faithfulness_sample:
@@ -167,7 +173,14 @@ def run_all(
         if limit:
             fs = min(fs, limit)
         summaries += asyncio.run(
-            _answer(spec["answer"]["configs"], spec["answer"]["datasets"], limit, yes, fs)
+            _answer(
+                spec["answer"]["configs"],
+                spec["answer"]["datasets"],
+                limit,
+                yes,
+                fs,
+                spec["answer"].get("strategy_suffix_by_dataset"),
+            )
         )
     typer.secho(
         f"\n{len(summaries)} runs completed; run `python -m legalrag.eval report --runs latest`",

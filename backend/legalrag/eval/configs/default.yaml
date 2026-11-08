@@ -6,4 +6,6 @@ retrieval:
 answer:
   configs: [E0, E2-hybrid_rerank]
   datasets: [tamir_test, refusal_set]
-  faithfulness_sample: 100   # yuitc_test items judged for faithfulness only
+  # refusal questions must be answered against the tax-only index (ADR-008)
+  strategy_suffix_by_dataset: {refusal_set: "__tamir"}
+  faithfulness_sample: 30   # yuitc_test items judged for faithfulness only (cost control)

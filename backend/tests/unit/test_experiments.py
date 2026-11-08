@@ -46,6 +46,7 @@ def test_default_suite_lists_retrieval_and_answer_parts():
     assert suite["retrieval"]["configs"] and suite["answer"]["configs"]
     assert set(suite["retrieval"]["datasets"]) >= {"yuitc_test", "tamir_test"}
     assert set(suite["answer"]["datasets"]) >= {"tamir_test", "refusal_set"}
+    assert suite["answer"]["strategy_suffix_by_dataset"] == {"refusal_set": "__tamir"}
 
 
 def test_load_custom_yaml(tmp_path: Path):
