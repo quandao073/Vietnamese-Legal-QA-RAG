@@ -44,6 +44,62 @@ class SearcherLike(Protocol):
     ) -> list[Hit]: ...
 
 
+class AdminStoreLike(Protocol):
+    def message_exists(self, message_id: str) -> bool: ...
+
+    def add_feedback(
+        self, *, message_id: str, rating: int, reason: str | None, comment: str | None
+    ) -> int: ...
+
+    def stats(self) -> dict[str, Any]: ...
+
+
+class _DbAdminStore:
+    def message_exists(self, message_id: str) -> bool:
+        from legalrag.db.repositories import QueryLogRepo
+        from legalrag.db.session import session_scope
+
+        with session_scope() as s:
+            return QueryLogRepo(s).exists(message_id)
+
+    def add_feedback(
+        self, *, message_id: str, rating: int, reason: str | None, comment: str | None
+    ) -> int:
+        from legalrag.db.repositories import FeedbackRepo
+        from legalrag.db.session import session_scope
+
+        with session_scope() as s:
+            return FeedbackRepo(s).insert(
+                message_id=message_id, rating=rating, reason=reason, comment=comment
+            )
+
+    def stats(self) -> dict[str, Any]:
+        from legalrag.db.repositories import FeedbackRepo, IngestRunRepo, StatsRepo
+        from legalrag.db.session import session_scope
+
+        with session_scope() as s:
+            data = StatsRepo(s).summary()
+            data["recent_negative_feedback"] = FeedbackRepo(s).latest_negative(20)
+            data["ingest_runs"] = [
+                {
+                    "run_id": r.run_id,
+                    "source": r.source,
+                    "strategy": r.strategy,
+                    "status": r.status,
+                    "n_docs": r.n_docs,
+                    "n_chunks": r.n_chunks,
+                    "started_at": r.started_at.isoformat() if r.started_at else None,
+                    "finished_at": r.finished_at.isoformat() if r.finished_at else None,
+                }
+                for r in IngestRunRepo(s).latest(10)
+            ]
+            return data
+
+
+def get_admin_store() -> AdminStoreLike:
+    return _DbAdminStore()
+
+
 def get_settings_dep() -> Settings:
     return get_settings()
 

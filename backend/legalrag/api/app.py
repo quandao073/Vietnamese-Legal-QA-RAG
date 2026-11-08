@@ -14,7 +14,7 @@ from starlette.concurrency import run_in_threadpool
 
 from legalrag import __version__
 from legalrag.api.errors import install_error_handlers
-from legalrag.api.routers import chat, documents, health, search
+from legalrag.api.routers import admin, chat, documents, feedback, health, search
 from legalrag.config import get_settings
 from legalrag.logging import request_id_var, setup_logging
 
@@ -69,6 +69,13 @@ def create_app() -> FastAPI:
         return response
 
     install_error_handlers(app)
-    for r in (health.router, chat.router, search.router, documents.router):
+    for r in (
+        health.router,
+        chat.router,
+        search.router,
+        documents.router,
+        feedback.router,
+        admin.router,
+    ):
         app.include_router(r, prefix=API_PREFIX)
     return app
