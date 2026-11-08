@@ -11,7 +11,7 @@ from pathlib import Path
 os.environ.setdefault("ANTHROPIC_API_KEY", "doc")
 os.environ.setdefault("LEGALRAG_SKIP_WARMUP", "1")
 
-from legalrag.api.app import create_app  # noqa: E402
+from legalrag.api.app import create_app
 
 NOTES = """
 ## Ghi chú

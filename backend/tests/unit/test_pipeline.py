@@ -140,7 +140,7 @@ async def test_parent_child_replaces_children_with_parent():
     assert res.reranked[0].text == "cả điều"
 
 
-async def test_clause_strategy_keeps_all_clauses_but_groups_same_article():
+async def test_clause_strategy_keeps_fusion_order_before_rerank():
     dense = FakeDense(
         {
             "q": [
@@ -156,8 +156,8 @@ async def test_clause_strategy_keeps_all_clauses_but_groups_same_article():
         _settings(rerank_enabled=False, retrieval_top_k=5, chunk_strategy="clause"),
     )
     res = await r.retrieve("q", qu=None)
-    # nothing is dropped (the gold clause may not be the top one); same-article hits sit together
-    assert [h.chunk_id for h in res.reranked] == ["a", "b", "c"]
+    # I4: no reordering/dropping in the fusion stage; grouping happens in the context builder
+    assert [h.chunk_id for h in res.reranked] == ["a", "c", "b"]
 
 
 async def test_non_legal_intent_returns_empty():

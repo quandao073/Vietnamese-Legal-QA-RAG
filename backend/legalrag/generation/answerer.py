@@ -3,6 +3,7 @@ citation verification → logging. Emits ChatEvents suitable for SSE."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 import uuid
@@ -181,6 +182,7 @@ class Answerer:
                 system=ANSWER_SYSTEM,
                 messages=self._generation_messages(bundle, qu.standalone_question, history),
                 max_tokens=s.llm_max_tokens,
+                effort=s.llm_effort,
             ):
                 if isinstance(item, LLMResult):
                     final = item
@@ -189,6 +191,7 @@ class Answerer:
                     yield ChatEvent(event="token", data={"text": item})
             latency["generation_ms"] = (time.perf_counter() - t) * 1000
             raw_answer = final.text if final else "".join(raw_parts)
+            truncated = bool(final and final.stop_reason == "max_tokens")
             if final:
                 usage = usage.add(final.usage)
 
@@ -197,6 +200,13 @@ class Answerer:
             cleaned, invalid = clean_invalid(raw_answer, valid)
             report = verify_citations(cleaned, bundle.sources)
             report.invalid = sorted(set(report.invalid) | set(invalid))
+            if truncated:
+                cleaned = (
+                    cleaned.rstrip()
+                    + "\n\n_(Câu trả lời bị cắt do vượt giới hạn độ dài; vui lòng hỏi hẹp hơn"
+                    " hoặc tăng LLM_MAX_TOKENS.)_"
+                )
+                yield ChatEvent(event="status", data={"stage": "truncated"})
             answer_md = append_disclaimer(cleaned)
             yield ChatEvent(event="citations", data=report.model_dump())
             latency["total_ms"] = (time.perf_counter() - t0) * 1000
@@ -217,6 +227,7 @@ class Answerer:
                 usage,
                 latency,
                 final.model if final else None,
+                truncated=truncated,
             )
         except LLMError as exc:
             latency["total_ms"] = (time.perf_counter() - t0) * 1000
@@ -244,7 +255,7 @@ class Answerer:
                 },
             )
         finally:
-            self._log(log)
+            await asyncio.to_thread(self._log, log)
 
     async def answer_sync(
         self,
@@ -317,6 +328,7 @@ class Answerer:
         usage: Usage,
         latency: dict[str, float],
         model: str | None,
+        truncated: bool = False,
     ) -> ChatEvent:
         return ChatEvent(
             event="done",
@@ -332,6 +344,7 @@ class Answerer:
                 "latency_ms": {k: round(v, 1) for k, v in latency.items()},
                 "model": model,
                 "prompt_version": PROMPT_VERSION,
+                "truncated": truncated,
             },
         )
 

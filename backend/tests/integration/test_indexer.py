@@ -14,6 +14,7 @@ from legalrag.ingest import indexer
 from legalrag.retrieval.dense import DenseStore, get_qdrant_client
 from legalrag.retrieval.embedder import FakeEmbedder
 from legalrag.retrieval.lexical import BM25Index
+from legalrag.schemas.document import LegalChunk, LegalDocument
 from legalrag.tokens import TokenCounter
 
 pytestmark = pytest.mark.integration
@@ -133,3 +134,34 @@ def test_add_file_indexes_custom_document(settings, data_dir, tmp_path):
         assert len(found) == 2
     bm25 = BM25Index.load(data_dir / "index" / "bm25" / STRATEGY)
     assert bm25.search("thuế môn bài", top_n=1)[0].payload["title"] == "Luật thử nghiệm"
+
+
+def test_partial_rebuild_keeps_other_sources_in_processed_files(settings, data_dir, tmp_path):
+    """C1: `build --source tamir` after a custom add-file must not drop the custom document from
+    documents.jsonl / chunks_{strategy}.jsonl (BM25 is rebuilt from these files)."""
+    law = tmp_path / "other_law.txt"
+    law.write_text("Điều 1. Phạm vi\nVăn bản giữ lại khi build lại nguồn khác.", encoding="utf-8")
+    indexer.add_file(
+        law,
+        title="Luật giữ lại",
+        url=None,
+        strategy=STRATEGY,
+        settings=settings,
+        embedder=FakeEmbedder(dim=32),
+    )
+    before = {
+        c.doc_id
+        for c in indexer.read_jsonl(data_dir / "processed" / f"chunks_{STRATEGY}.jsonl", LegalChunk)
+    }
+    assert "custom:luat-giu-lai" in before
+    indexer.build(["tamir"], strategy=STRATEGY, settings=settings, counter=TokenCounter(None))
+    after_chunks = list(
+        indexer.read_jsonl(data_dir / "processed" / f"chunks_{STRATEGY}.jsonl", LegalChunk)
+    )
+    after_docs = list(indexer.read_jsonl(data_dir / "processed" / "documents.jsonl", LegalDocument))
+    assert "custom:luat-giu-lai" in {c.doc_id for c in after_chunks}
+    assert "custom:luat-giu-lai" in {d.doc_id for d in after_docs}
+    assert sum(c.doc_id.startswith("tamir:") for c in after_chunks) > 10
+    # tamir docs appear exactly once (no duplicates after the rebuild)
+    ids = [c.chunk_id for c in after_chunks]
+    assert len(ids) == len(set(ids))

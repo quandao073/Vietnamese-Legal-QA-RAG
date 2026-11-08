@@ -155,18 +155,6 @@ class Retriever:
         base = strategy.split("__", 1)[0]
         if base == "parent_child":
             return self._to_parents(hits)
-        if base == "clause":
-            # keep every clause (the gold one may rank below a sibling) but place clauses of the
-            # same article next to each other so the context reads as one Điều
-            order: list[tuple[str, str]] = []
-            buckets: dict[tuple[str, str], list[Hit]] = {}
-            for h in hits:
-                key = (str(h.payload.get("doc_id")), str(h.payload.get("article")))
-                if key not in buckets:
-                    order.append(key)
-                    buckets[key] = []
-                buckets[key].append(h)
-            return [h for key in order for h in buckets[key]]
         return hits
 
     def _to_parents(self, hits: list[Hit]) -> list[Hit]:

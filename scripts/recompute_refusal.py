@@ -8,16 +8,15 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 
 os.environ.setdefault("ANTHROPIC_API_KEY", "x")
 
-from legalrag.config import get_settings  # noqa: E402
-from legalrag.db.models import EvalRun  # noqa: E402
-from legalrag.db.session import session_scope  # noqa: E402
-from legalrag.eval.datasets import EvalItem  # noqa: E402
-from legalrag.eval.judge import JudgeScores  # noqa: E402
-from legalrag.eval.runner import _classify_failure, _refusal_metrics, runs_dir  # noqa: E402
+from legalrag.config import get_settings
+from legalrag.db.models import EvalRun
+from legalrag.db.session import session_scope
+from legalrag.eval.datasets import EvalItem
+from legalrag.eval.judge import JudgeScores
+from legalrag.eval.runner import _classify_failure, _refusal_metrics, runs_dir
 
 
 def main() -> None:

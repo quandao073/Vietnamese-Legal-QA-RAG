@@ -72,3 +72,14 @@ def test_context_keeps_injection_as_data():
 def test_empty_hits():
     bundle = build_context([], budget_tokens=100, counter=TokenCounter(None))
     assert bundle.text == "" and bundle.sources == [] and bundle.dropped == 0
+
+
+def test_context_groups_same_article_adjacent_for_clause_chunks():
+    counter = TokenCounter(None)
+    hits = [
+        _hit("a", "k1", doc_id="X", score=0.9, article="Điều 5"),
+        _hit("c", "k3", doc_id="X", score=0.8, article="Điều 6"),
+        _hit("b", "k2", doc_id="X", score=0.7, article="Điều 5"),
+    ]
+    bundle = build_context(hits, budget_tokens=1000, counter=counter)
+    assert [s.chunk_id for s in bundle.sources] == ["a", "b", "c"]

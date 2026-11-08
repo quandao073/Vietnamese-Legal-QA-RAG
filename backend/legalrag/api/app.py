@@ -26,6 +26,8 @@ API_PREFIX = "/api/v1"
 async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     setup_logging(settings.log_level)
+    if settings.admin_token.get_secret_value() == "change-me":
+        logger.warning("ADMIN_TOKEN is the default value; set it in .env before exposing /admin")
     app.state.ready = False
     if os.environ.get("LEGALRAG_SKIP_WARMUP") != "1":
         from legalrag.services import warm_up

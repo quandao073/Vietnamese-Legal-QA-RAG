@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     llm_model_main: str = "claude-sonnet-5-5"
     llm_model_small: str = "claude-haiku-5-5"
     llm_max_tokens: int = 1500
+    llm_effort: str = "low"  # adaptive-thinking depth of the answer model (shares max_tokens)
     llm_temperature: float = 0.1  # kept for compatibility; not sent (ADR-001)
     llm_max_concurrency: int = 4
     llm_cache_enabled: bool = False

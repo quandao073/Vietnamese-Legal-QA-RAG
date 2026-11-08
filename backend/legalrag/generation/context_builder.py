@@ -73,14 +73,20 @@ def _grouped(hits: list[Hit]) -> list[Hit]:
         hits, key=lambda h: -(h.rerank_score if h.rerank_score is not None else h.score)
     )
     out: list[Hit] = []
-    seen_docs: list[str] = []
     for h in ordered:
         doc = str(h.payload.get("doc_id"))
-        if doc in seen_docs:
-            last = max(i for i, o in enumerate(out) if str(o.payload.get("doc_id")) == doc)
-            out.insert(last + 1, h)
+        art = str(h.payload.get("article"))
+        same_article = [
+            i
+            for i, o in enumerate(out)
+            if str(o.payload.get("doc_id")) == doc and str(o.payload.get("article")) == art
+        ]
+        same_doc = [i for i, o in enumerate(out) if str(o.payload.get("doc_id")) == doc]
+        if same_article:
+            out.insert(max(same_article) + 1, h)  # clauses of one article read as a block
+        elif same_doc:
+            out.insert(max(same_doc) + 1, h)
         else:
-            seen_docs.append(doc)
             out.append(h)
     return out
 

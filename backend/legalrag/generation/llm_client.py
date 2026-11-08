@@ -170,12 +170,14 @@ class LLMClient:
             return False
         return self.settings.llm_cache_enabled if use_cache is None else use_cache
 
-    async def _with_retry(self, fn: Any) -> Any:
+    async def _with_retry(self, fn: Any, *, use_sem: bool = True) -> Any:
         last: BaseException | None = None
         for attempt in range(MAX_ATTEMPTS):
             try:
-                async with self._sem:
-                    return await fn()
+                if use_sem:
+                    async with self._sem:
+                        return await fn()
+                return await fn()
             except Exception as exc:
                 code, retryable = _classify(exc)
                 last = exc
@@ -307,16 +309,17 @@ class LLMClient:
             stream = await cm.__aenter__()
             return cm, stream
 
-        stream_cm, stream = await self._with_retry(_open)
-        try:
-            async for delta in stream.text_stream:
-                yield delta
-            final = await stream.get_final_message()
-        except Exception as exc:
-            code, _ = _classify(exc)
-            raise LLMError(code, str(exc)) from exc
-        finally:
-            await stream_cm.__aexit__(None, None, None)
+        async with self._sem:  # slot held for the whole stream (LLM_MAX_CONCURRENCY)
+            stream_cm, stream = await self._with_retry(_open, use_sem=False)
+            try:
+                async for delta in stream.text_stream:
+                    yield delta
+                final = await stream.get_final_message()
+            except Exception as exc:
+                code, _ = _classify(exc)
+                raise LLMError(code, str(exc)) from exc
+            finally:
+                await stream_cm.__aexit__(None, None, None)
         res = LLMResult(
             text=self._text_of(final),
             usage=self._usage(final.usage),

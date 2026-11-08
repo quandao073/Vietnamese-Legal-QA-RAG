@@ -245,3 +245,45 @@ async def test_other_intents_use_templates(intent, template_key):
     ans = make(HITS, llm)
     events = await _collect(ans, "x", session_id=None, history=None, overrides=None)
     assert events[-1].data["answer_md"].startswith(INTENT_TEMPLATES[template_key])
+
+
+async def test_query_log_written_off_the_event_loop_thread():
+    import threading
+
+    class ThreadLogRepo:
+        def __init__(self):
+            self.threads = []
+
+        def insert(self, log):
+            self.threads.append(threading.current_thread() is threading.main_thread())
+
+    llm = FakeLLM(LEGAL_QU, "Trả lời [#1].")
+    log = ThreadLogRepo()
+    ans = make(HITS, llm, log_repo=log)
+    await _collect(
+        ans, "Thu nhập nào được miễn thuế TNCN?", session_id=None, history=None, overrides=None
+    )
+    assert log.threads == [False]  # I1: blocking DB write must not run on the loop thread
+
+
+async def test_truncated_generation_is_flagged():
+    class TruncLLM(FakeLLM):
+        async def stream(self, **kw):
+            self.stream_calls.append(kw)
+            yield "Kết luận dang dở [#1]"
+            yield LLMResult(
+                text="Kết luận dang dở [#1]",
+                usage=Usage(10, 5),
+                model="m",
+                stop_reason="max_tokens",
+            )
+
+    llm = TruncLLM(LEGAL_QU, "")
+    ans = make(HITS, llm)
+    events = await _collect(
+        ans, "Thu nhập nào được miễn thuế TNCN?", session_id=None, history=None, overrides=None
+    )
+    done = events[-1].data
+    assert done["truncated"] is True
+    assert "bị cắt" in done["answer_md"]  # Vietnamese note appended before the disclaimer
+    assert llm.stream_calls[0]["effort"] == _settings().llm_effort  # I3: effort sent explicitly

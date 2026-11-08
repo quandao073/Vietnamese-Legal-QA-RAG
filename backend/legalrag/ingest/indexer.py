@@ -123,6 +123,11 @@ def _sources(sources: list[str]) -> list[str]:
     return list(SOURCES) if "all" in sources else sources
 
 
+def _source_of(doc_id: str) -> str:
+    """Source prefix of a doc id (``tamir:doc_000001`` -> ``tamir``)."""
+    return doc_id.split(":", 1)[0]
+
+
 def build(
     sources: list[str],
     *,
@@ -143,11 +148,28 @@ def build(
     n_docs = n_chunks = 0
     docs_path, chunks_path = paths.documents(), paths.chunks(strategy)
     docs_path.parent.mkdir(parents=True, exist_ok=True)
+    rebuilt = _sources(sources)
+    # Processed files feed the BM25 build, so documents/chunks of sources that are NOT
+    # being rebuilt must survive a partial `build --source X` (review finding C1).
+    kept_docs = [
+        d
+        for d in (read_jsonl(docs_path, LegalDocument) if docs_path.exists() else [])
+        if _source_of(d.doc_id) not in rebuilt
+    ]
+    kept_chunks = [
+        c
+        for c in (read_jsonl(chunks_path, LegalChunk) if chunks_path.exists() else [])
+        if _source_of(c.doc_id) not in rebuilt
+    ]
     with (
         open(docs_path, "w", encoding="utf-8") as fd,
         open(chunks_path, "w", encoding="utf-8") as fc,
     ):
-        for source in _sources(sources):
+        for d in kept_docs:
+            fd.write(d.model_dump_json(exclude={"extra": {"span_map"}}) + "\n")
+        for c in kept_chunks:
+            fc.write(c.model_dump_json() + "\n")
+        for source in rebuilt:
             loader = get_loader(
                 source,
                 Path(s.data_dir),

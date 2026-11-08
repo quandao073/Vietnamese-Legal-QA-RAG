@@ -193,5 +193,7 @@ def rate_limit(request: Request) -> None:
 
 def require_admin(x_admin_token: str | None = Header(default=None, alias="X-Admin-Token")) -> None:
     expected = get_settings().admin_token.get_secret_value()
-    if not x_admin_token or not secrets.compare_digest(x_admin_token, expected):
+    if not x_admin_token or not secrets.compare_digest(
+        x_admin_token.encode("utf-8"), expected.encode("utf-8")
+    ):
         raise ApiError(401, "unauthorized", "Mã quản trị (X-Admin-Token) không hợp lệ.")

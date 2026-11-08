@@ -284,3 +284,15 @@ async def test_stream_uses_response_cache_when_enabled():
     assert second[0] == "Xin chào" and second[-1].text == "Xin chào"
     assert second[-1].usage.output_tokens == 0
     assert len(fake.calls) == 1  # second call never hit the API
+
+
+async def test_stream_holds_the_concurrency_slot_until_the_stream_ends():
+    fake = FakeAnthropic([FakeStream(["a", "b"])])
+    llm = LLMClient(_settings(llm_max_concurrency=1), cache=None, client=fake)
+    gen = llm.stream(
+        model="m", system="S", messages=[{"role": "user", "content": "q"}], max_tokens=10
+    )
+    first = await gen.__anext__()
+    assert first == "a" and llm._sem.locked()  # I2: slot held while streaming
+    rest = [x async for x in gen]
+    assert isinstance(rest[-1], LLMResult) and not llm._sem.locked()

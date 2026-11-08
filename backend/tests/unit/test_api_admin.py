@@ -145,3 +145,12 @@ async def test_admin_ingest_rejects_bad_source(client):
         headers={"X-Admin-Token": TOKEN},
     )
     assert r.status_code == 422
+
+
+async def test_admin_non_ascii_token_is_401_not_500(client):
+    # HTTP header bytes outside ASCII are decoded as latin-1 by the server; compare_digest on
+    # str would raise TypeError (500). Send raw bytes to reproduce what a client can emit.
+    r = await client.get(
+        "/api/v1/admin/stats", headers={b"X-Admin-Token": "mã quản".encode("latin-1", "replace")}
+    )
+    assert r.status_code == 401
