@@ -15,6 +15,11 @@ from legalrag.retrieval.types import RetrievalOverrides
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 
+@app.callback()
+def _root() -> None:
+    """Vietnamese Legal RAG command line."""
+
+
 @app.command()
 def ask(
     question: str = typer.Argument(..., help="Câu hỏi pháp luật bằng tiếng Việt"),
