@@ -233,3 +233,41 @@ async def test_connection_error_maps_to_unknown_after_retries(no_sleep):
             model="m", system="S", messages=[{"role": "user", "content": "q"}], max_tokens=10
         )
     assert ei.value.code == "connection" and len(fake.calls) == 5
+
+
+class FailingEnterStream(FakeStream):
+    """The SDK sends the request inside __aenter__; errors surface there, not while iterating."""
+
+    def __init__(self, exc):
+        super().__init__([])
+        self.exc = exc
+
+    async def __aenter__(self):
+        raise self.exc
+
+
+async def test_stream_maps_auth_error_raised_on_enter():
+    fake = FakeAnthropic([FailingEnterStream(_http_error(anthropic.AuthenticationError, 401))])
+    llm = LLMClient(_settings(), cache=None, client=fake)
+    with pytest.raises(LLMError) as ei:
+        [
+            x
+            async for x in llm.stream(
+                model="m", system="S", messages=[{"role": "user", "content": "q"}], max_tokens=10
+            )
+        ]
+    assert ei.value.code == "auth" and len(fake.calls) == 1
+
+
+async def test_stream_retries_rate_limit_on_enter(no_sleep):
+    fake = FakeAnthropic(
+        [FailingEnterStream(_http_error(anthropic.RateLimitError, 429)), FakeStream(["ok"])]
+    )
+    llm = LLMClient(_settings(), cache=None, client=fake)
+    items = [
+        x
+        async for x in llm.stream(
+            model="m", system="S", messages=[{"role": "user", "content": "q"}], max_tokens=10
+        )
+    ]
+    assert items[0] == "ok" and len(fake.calls) == 2

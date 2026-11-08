@@ -295,17 +295,21 @@ class LLMClient:
             params["output_config"] = {"effort": effort}
 
         async def _open() -> Any:
-            return self._client.messages.stream(**params)
+            # the SDK sends the request in __aenter__, so errors (401/429/529) surface here
+            cm = self._client.messages.stream(**params)
+            stream = await cm.__aenter__()
+            return cm, stream
 
-        stream_cm = await self._with_retry(_open)
-        async with stream_cm as stream:
-            try:
-                async for delta in stream.text_stream:
-                    yield delta
-                final = await stream.get_final_message()
-            except Exception as exc:
-                code, _ = _classify(exc)
-                raise LLMError(code, str(exc)) from exc
+        stream_cm, stream = await self._with_retry(_open)
+        try:
+            async for delta in stream.text_stream:
+                yield delta
+            final = await stream.get_final_message()
+        except Exception as exc:
+            code, _ = _classify(exc)
+            raise LLMError(code, str(exc)) from exc
+        finally:
+            await stream_cm.__aexit__(None, None, None)
         yield LLMResult(
             text=self._text_of(final),
             usage=self._usage(final.usage),
