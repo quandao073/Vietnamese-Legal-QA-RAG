@@ -221,9 +221,7 @@ class LLMClient:
             hit = self.cache.get(key)
             if hit is not None:
                 d = json.loads(hit.decode("utf-8"))
-                return LLMResult(
-                    d["text"], Usage(**d["usage"]), d["model"], d.get("stop_reason"), cached=True
-                )
+                return LLMResult(d["text"], Usage(), d["model"], d.get("stop_reason"), cached=True)
 
         msg = await self._with_retry(lambda: self._client.messages.create(**params))
         res = LLMResult(
@@ -300,9 +298,7 @@ class LLMClient:
             if hit is not None:
                 d = json.loads(hit.decode("utf-8"))
                 yield d["text"]
-                yield LLMResult(
-                    d["text"], Usage(**d["usage"]), d["model"], d.get("stop_reason"), cached=True
-                )
+                yield LLMResult(d["text"], Usage(), d["model"], d.get("stop_reason"), cached=True)
                 return
 
         async def _open() -> Any:

@@ -155,6 +155,7 @@ async def test_response_cache_hits_on_second_call():
     first = await llm.complete(**args)
     second = await llm.complete(**args)
     assert first.cached is False and second.cached is True and second.text == "cached answer"
+    assert second.usage.input_tokens == 0 and second.usage.cost_usd == 0  # no new tokens spent
     assert len(fake.calls) == 1
     # a different prompt misses the cache
     fake.script.append(_message("other"))
@@ -281,4 +282,5 @@ async def test_stream_uses_response_cache_when_enabled():
     second = [x async for x in llm.stream(**args)]
     assert first[-1].cached is False and second[-1].cached is True
     assert second[0] == "Xin chào" and second[-1].text == "Xin chào"
+    assert second[-1].usage.output_tokens == 0
     assert len(fake.calls) == 1  # second call never hit the API
