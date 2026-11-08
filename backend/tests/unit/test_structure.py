@@ -100,3 +100,11 @@ def test_preamble_text_before_first_marker_kept_on_document():
     assert root.preamble.startswith("Áp dụng chế độ tiền lương")
     # clauses before any article attach to the document root
     assert [c.label for c in root.children if c.kind == "clause"] == ["Khoản 1", "Khoản 2"]
+
+
+def test_clause_with_explicit_khoan_prefix():
+    # YuITC passages often start with "Khoản 1. ..." instead of "1. ..."
+    text = "Khoản 1. Lao động giỏi là người đạt chuẩn." + "\n" + "Khoản 2. Chiến sĩ giỏi."
+    root = parse_structure(text)
+    assert [c.label for c in root.children] == ["Khoản 1", "Khoản 2"]
+    assert root.children[0].kind == "clause"

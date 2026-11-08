@@ -9,7 +9,7 @@ from typing import Literal
 
 CHAPTER_RE = re.compile(r"^(Chương\s+[IVXLCDM]+)\s*[\.:]?\s*(.*)$")
 ARTICLE_RE = re.compile(r"^(Điều\s+\d+[a-z]?)\s*[\.:]?\s*(.*)$")
-CLAUSE_RE = re.compile(r"^(\d{1,3})\.\s+(.*)$")
+CLAUSE_RE = re.compile(r"^(?:Khoản\s+)?(\d{1,3})\.\s+(.*)$")
 POINT_RE = re.compile(r"^([a-zđ]{1,2})\)\s+(.*)$")
 
 Kind = Literal["document", "chapter", "article", "clause", "point"]

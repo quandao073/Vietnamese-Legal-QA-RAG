@@ -18,9 +18,11 @@ _OLD_TO_NEW = dict(_TONE_PAIRS)
 _OLD_TO_NEW.update({k[0].upper() + k[1]: v[0].upper() + v[1] for k, v in _TONE_PAIRS.items()})
 _TONE_RE = re.compile("(" + "|".join(map(re.escape, _OLD_TO_NEW)) + r")(?![^\W\d_])")
 
-_CONTROL_RE = re.compile(r"[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f​‌‍﻿]")
+_CONTROL_CODEPOINTS = [*range(0, 9), 11, 12, *range(14, 32), 0x7F, 0x200B, 0x200C, 0x200D, 0xFEFF]
+_CONTROL_RE = re.compile("[" + "".join(map(chr, _CONTROL_CODEPOINTS)) + "]")
 _DASH_RE = re.compile(r"[‒–—―−]")
-_SPACES_RE = re.compile(r"[ \t  -   　]+")
+_SPACE_CODEPOINTS = [0x20, 0x09, 0xA0, *range(0x2000, 0x200B), 0x202F, 0x205F, 0x3000]
+_SPACES_RE = re.compile("[" + "".join(map(chr, _SPACE_CODEPOINTS)) + "]+")
 _MULTI_NL_RE = re.compile(r"\n{3,}")
 
 _BOILERPLATE_LINES = (
