@@ -135,6 +135,7 @@ def health_probe() -> dict[str, Any]:
     from legalrag.cache import RedisCache
     from legalrag.db.session import ping as pg_ping
     from legalrag.retrieval.dense import get_qdrant_client, qdrant_ping
+    from legalrag.retrieval.embedder import get_embedder
 
     s = get_settings()
     out: dict[str, Any] = {
@@ -142,7 +143,7 @@ def health_probe() -> dict[str, Any]:
         "postgres": pg_ping(),
         "redis": RedisCache(s.redis_url).ping(),
         "bm25_loaded": services.bm25_loaded(s.chunk_strategy),
-        "embedder_loaded": services._retriever is not None,
+        "embedder_loaded": get_embedder.cache_info().currsize > 0,
         "collection": s.collection_name(s.chunk_strategy),
         "n_chunks": None,
     }
