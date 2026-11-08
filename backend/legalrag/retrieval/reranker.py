@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import math
 import re
 import threading
 from functools import lru_cache
@@ -36,7 +35,8 @@ class CrossEncoderReranker:
         raw = self._m.predict(
             [(query, t) for t in texts], batch_size=RERANK_BATCH, show_progress_bar=False
         )
-        return [float(1.0 / (1.0 + math.exp(-float(x)))) for x in raw]
+        # CrossEncoder.predict already applies the model's sigmoid → probabilities in [0, 1]
+        return [min(1.0, max(0.0, float(x))) for x in raw]
 
 
 class FakeReranker:

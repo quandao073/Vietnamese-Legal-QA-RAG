@@ -1,3 +1,5 @@
+import pytest
+
 from legalrag.retrieval.reranker import FakeReranker, rerank
 from legalrag.retrieval.types import Hit
 
@@ -23,3 +25,17 @@ def test_rerank_sorts_truncates_and_records_scores():
 
 def test_rerank_empty():
     assert rerank("q", [], FakeReranker(), top_k=5) == []
+
+
+def test_cross_encoder_scores_are_probabilities_not_double_squashed():
+    from legalrag.retrieval.reranker import CrossEncoderReranker
+
+    class FakeModel:
+        def predict(self, pairs, batch_size, show_progress_bar):
+            return [0.9, 1.6e-05]  # sentence-transformers already applies the sigmoid
+
+    r = CrossEncoderReranker.__new__(CrossEncoderReranker)
+    r._m = FakeModel()
+    r.model_name = "fake"
+    scores = r.score("q", ["a", "b"])
+    assert scores[0] == pytest.approx(0.9) and scores[1] < 0.001  # not 0.71 / 0.5
