@@ -73,7 +73,8 @@ def test_article_chunker_one_chunk_per_article(tamir_doc, counter):
     assert first.chapter == "Chương I" and first.article_title == "Phạm vi điều chỉnh"
     assert first.title == tamir_doc.title
     assert first.clause is None and first.source_ids == ["passage_000001"]
-    assert first.chunk_id == "tamir:doc_000001#00000"
+    # strategy label is part of the id so strategies never collide in Postgres
+    assert first.chunk_id == "tamir:doc_000001#article#00000"
 
 
 def test_article_chunker_splits_long_article_by_clause(tamir_doc, counter):
@@ -159,9 +160,12 @@ def test_source_ids_roundtrip(tamir_doc, counter):
 
 
 def test_chunk_ids_and_seq_unique(tamir_doc, counter):
+    all_ids: set[str] = set()
     for name in STRATEGIES:
         chunks = build_chunks(tamir_doc, get_chunker(name, counter=counter, max_tokens=120))
         ids = [c.chunk_id for c in chunks]
         assert len(set(ids)) == len(ids)
+        assert not (all_ids & set(ids)), "chunk ids must be unique across strategies"
+        all_ids |= set(ids)
         assert [c.seq for c in chunks] == list(range(len(chunks)))
         assert all(c.text_for_bm25 and c.token_count > 0 for c in chunks)

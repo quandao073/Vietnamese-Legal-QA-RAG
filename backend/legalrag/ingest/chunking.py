@@ -61,7 +61,7 @@ class _Ctx:
     ) -> LegalChunk:
         text = (header + body).strip()
         chunk = LegalChunk(
-            chunk_id=make_chunk_id(self.doc.doc_id, self.seq),
+            chunk_id=make_chunk_id(self.doc.doc_id, self.seq, self.strategy),
             doc_id=self.doc.doc_id,
             seq=self.seq,
             title=self.doc.title,

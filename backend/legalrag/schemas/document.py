@@ -57,5 +57,6 @@ class LegalChunk(BaseModel):
         return f"{title} — {', '.join(parts)}"
 
 
-def make_chunk_id(doc_id: str, seq: int) -> str:
-    return f"{doc_id}#{seq:05d}"
+def make_chunk_id(doc_id: str, seq: int, strategy: str) -> str:
+    """``{doc_id}#{strategy}#{seq:05d}`` — the strategy label keeps ids unique across indexes."""
+    return f"{doc_id}#{strategy}#{seq:05d}"
