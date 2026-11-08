@@ -1,0 +1,7 @@
+# Answer-quality part of the default suite without re-running retrieval (used after `eval retrieval`)
+name: answer_only
+answer:
+  configs: [E0, E2-hybrid_rerank]
+  datasets: [tamir_test, refusal_set]
+  strategy_suffix_by_dataset: {refusal_set: "__tamir"}
+  faithfulness_sample: 30
