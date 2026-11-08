@@ -142,6 +142,9 @@ def answer(
     dataset: str = typer.Option("tamir_test,refusal_set"),
     limit: int = typer.Option(None),
     yes: bool = typer.Option(False, "--yes", help="skip the cost confirmation"),
+    strategy_suffix: str = typer.Option(
+        "", "--strategy-suffix", help="index label tag, e.g. __tamir for the tax-only indexes"
+    ),
 ) -> None:
     """End-to-end answer experiments with LLM-as-judge."""
     from legalrag.eval.experiments import load_suite
@@ -150,6 +153,8 @@ def answer(
     cfgs = [c for c in load_suite(matrix) if c.name == config or config == matrix]
     if not cfgs:
         raise typer.BadParameter(f"unknown config {config}")
+    if strategy_suffix:
+        cfgs = [c.model_copy(update={"strategy_suffix": strategy_suffix}) for c in cfgs]
     asyncio.run(_answer(cfgs, dataset.split(","), limit, yes))
 
 
