@@ -1,0 +1,6 @@
+# Embedding model (optional; needs re-index; note leakage of vietnamese-bi-encoder on BKAI test)
+name: E5
+base: {strategy: article, mode: hybrid, use_rerank: true, use_rewrite: true, top_k: 6}
+variants:
+  - {suffix: bge-m3, embedding_model: BAAI/bge-m3}
+  - {suffix: vietnamese-bi-encoder, embedding_model: bkai-foundation-models/vietnamese-bi-encoder}

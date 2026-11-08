@@ -1,0 +1,4 @@
+# Top-K sweep on article × hybrid+rerank
+name: E3
+base: {strategy: article, mode: hybrid, use_rerank: true, use_rewrite: true}
+grid: {top_k: [2, 4, 6, 8, 10]}

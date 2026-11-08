@@ -1,0 +1,10 @@
+# Chunking strategies × hybrid+rerank, k=6 (Tamir-only indexes, suffix __tamir)
+name: E1
+strategy_suffix: "__tamir"
+base: {mode: hybrid, use_rerank: true, use_rewrite: true, top_k: 6}
+variants:
+  - {suffix: fixed_256_32, strategy: fixed_256_32}
+  - {suffix: fixed_512_64, strategy: fixed_512_64}
+  - {suffix: article, strategy: article}
+  - {suffix: clause, strategy: clause}
+  - {suffix: parent_child, strategy: parent_child}

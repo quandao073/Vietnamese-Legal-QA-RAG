@@ -1,0 +1,9 @@
+# `make eval`: retrieval E0 + E2 + E3 on both test sets; answers E0 vs best config on tamir_test + refusal_set
+name: default
+retrieval:
+  configs: [E0, E2, E3]
+  datasets: [yuitc_test, tamir_test]
+answer:
+  configs: [E0, E2-hybrid_rerank]
+  datasets: [tamir_test, refusal_set]
+  faithfulness_sample: 100   # yuitc_test items judged for faithfulness only

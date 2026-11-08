@@ -1,0 +1,4 @@
+# Query rewrite on/off
+name: E4
+base: {strategy: article, mode: hybrid, use_rerank: true, top_k: 6}
+grid: {use_rewrite: [true, false]}

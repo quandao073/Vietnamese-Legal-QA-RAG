@@ -1,0 +1,8 @@
+# Retrieval method on article chunks, k=6
+name: E2
+base: {strategy: article, use_rewrite: true, top_k: 6}
+variants:
+  - {suffix: dense, mode: dense, use_rerank: false}
+  - {suffix: bm25, mode: bm25, use_rerank: false}
+  - {suffix: hybrid, mode: hybrid, use_rerank: false}
+  - {suffix: hybrid_rerank, mode: hybrid, use_rerank: true}

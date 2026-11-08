@@ -81,6 +81,8 @@ ignore = ["B008"]
 [tool.ruff.lint.per-file-ignores]
 "legalrag/generation/prompts.py" = ["E501"]  # prompt prose is kept readable, not wrapped
 "legalrag/eval/judge.py" = ["E501"]
+"legalrag/eval/report.py" = ["E501"]  # Vietnamese report prose
+"legalrag/eval/cli.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"

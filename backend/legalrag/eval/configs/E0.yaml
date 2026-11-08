@@ -1,0 +1,3 @@
+# Proposal baseline: fixed windows, dense only, k=5, no rewrite, no rerank
+name: E0
+base: {strategy: fixed_512_64, mode: dense, use_rerank: false, use_rewrite: false, top_k: 5}
