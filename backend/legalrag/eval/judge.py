@@ -99,7 +99,7 @@ async def judge_answer(
             {"role": "user", "content": _user_message(question, answer, context_text, gold_answer)}
         ],
         schema=JudgeScores,
-        max_tokens=800,
+        max_tokens=1200,
         effort="low",
         use_cache=True,
     )

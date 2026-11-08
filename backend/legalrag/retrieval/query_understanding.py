@@ -80,7 +80,7 @@ async def understand(
             system=QUERY_UNDERSTANDING_SYSTEM,
             messages=[{"role": "user", "content": _user_message(question, history)}],
             schema=QueryUnderstanding,
-            max_tokens=600,
+            max_tokens=900,
             effort="low",
         )
         if not qu.standalone_question.strip():

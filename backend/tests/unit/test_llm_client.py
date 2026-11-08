@@ -271,3 +271,14 @@ async def test_stream_retries_rate_limit_on_enter(no_sleep):
         )
     ]
     assert items[0] == "ok" and len(fake.calls) == 2
+
+
+async def test_stream_uses_response_cache_when_enabled():
+    fake = FakeAnthropic([FakeStream(["Xin ", "chào"])])
+    llm = LLMClient(_settings(llm_cache_enabled=True), cache=MemoryCache(), client=fake)
+    args = dict(model="m", system="S", messages=[{"role": "user", "content": "q"}], max_tokens=10)
+    first = [x async for x in llm.stream(**args)]
+    second = [x async for x in llm.stream(**args)]
+    assert first[-1].cached is False and second[-1].cached is True
+    assert second[0] == "Xin chào" and second[-1].text == "Xin chào"
+    assert len(fake.calls) == 1  # second call never hit the API

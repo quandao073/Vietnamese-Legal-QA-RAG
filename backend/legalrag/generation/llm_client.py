@@ -284,6 +284,7 @@ class LLMClient:
         max_tokens: int,
         cache_system: bool = True,
         effort: str | None = None,
+        use_cache: bool | None = None,
     ) -> AsyncIterator[str | LLMResult]:
         params: dict[str, Any] = {
             "model": model,
@@ -293,6 +294,16 @@ class LLMClient:
         }
         if effort:
             params["output_config"] = {"effort": effort}
+        key = self._cache_key("complete", **params)  # same key as complete(): shared cache
+        if self._use_cache(use_cache) and self.cache is not None:
+            hit = self.cache.get(key)
+            if hit is not None:
+                d = json.loads(hit.decode("utf-8"))
+                yield d["text"]
+                yield LLMResult(
+                    d["text"], Usage(**d["usage"]), d["model"], d.get("stop_reason"), cached=True
+                )
+                return
 
         async def _open() -> Any:
             # the SDK sends the request in __aenter__, so errors (401/429/529) surface here
@@ -310,12 +321,23 @@ class LLMClient:
             raise LLMError(code, str(exc)) from exc
         finally:
             await stream_cm.__aexit__(None, None, None)
-        yield LLMResult(
+        res = LLMResult(
             text=self._text_of(final),
             usage=self._usage(final.usage),
             model=str(getattr(final, "model", model)),
             stop_reason=getattr(final, "stop_reason", None),
         )
+        if self._use_cache(use_cache) and self.cache is not None:
+            payload = {
+                "text": res.text,
+                "usage": res.usage.__dict__,
+                "model": res.model,
+                "stop_reason": res.stop_reason,
+            }
+            self.cache.set(
+                key, json.dumps(payload, ensure_ascii=False).encode("utf-8"), ttl=RESPONSE_CACHE_TTL
+            )
+        yield res
 
 
 def _strict_schema(schema: dict[str, Any]) -> dict[str, Any]:
