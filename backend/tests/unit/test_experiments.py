@@ -51,7 +51,8 @@ def test_default_suite_lists_retrieval_and_answer_parts():
 def test_load_custom_yaml(tmp_path: Path):
     p = tmp_path / "X.yaml"
     p.write_text(
-        "name: X\nbase: {strategy: clause, mode: hybrid, use_rerank: true, use_rewrite: true, top_k: 6}\n"
+        "name: X\n"
+        "base: {strategy: clause, mode: hybrid, use_rerank: true, use_rewrite: true, top_k: 6}\n"
         "grid: {top_k: [2, 4]}\n",
         encoding="utf-8",
     )
